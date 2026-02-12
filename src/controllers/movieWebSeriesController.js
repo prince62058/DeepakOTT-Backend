@@ -23,63 +23,15 @@ const s3 = new AWS.S3({
   region: "sgp1",
 });
 
-// Generate Presigned URL for Direct Upload
-const getPresignedUrl = async (req, res) => {
-  try {
-    const { fileName, fileType } = req.body;
-
-    if (!fileName || !fileType) {
-      return res.status(400).json({
-        success: false,
-        message: "File name and type are required",
-      });
-    }
-
-    const key = `movies/${Date.now()}-${fileName}`;
-
-    // Params for the signed URL
-    const params = {
-      Bucket: process.env.LINODE_OBJECT_BUCKET,
-      Key: key,
-      Expires: 300, // URL expires in 5 minutes
-      ContentType: fileType,
-      ACL: "public-read",
-    };
-
-    // Generate signed URL
-    const signedUrl = await s3.getSignedUrlPromise("putObject", params);
-
-    // Public URL for accessing the file after upload
-    const publicUrl = `https://${process.env.LINODE_OBJECT_BUCKET}.sgp1.digitaloceanspaces.com/${key}`;
-
-    res.status(200).json({
-      success: true,
-      url: signedUrl,
-      publicUrl: publicUrl,
-      key: key,
-    });
-  } catch (error) {
-    console.error("Presigned URL Error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// upload controller for movies/ web series (Legacy/Fallback)
+// upload controller for movies/ web series
 const uploadMovie = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: "No file uploaded or upload failed!",
+        message: "Movie file is required!",
       });
     }
-
-    // With multer-s3 having been reverted, this function expects req.file to have a buffer.
-    // However, if we are switching to Presigned URLs, this might not be used by the new flow.
-    // Keeping it for backward compatibility or small file uploads if needed.
 
     console.log(
       "Uploading file to Spaces:",
@@ -124,10 +76,11 @@ const uploadMovie = async (req, res) => {
       url: mainURL,
     });
   } catch (error) {
-    console.error("Upload Controller Error:", error);
+    console.error("Upload Error Details:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      error: error.message,
+      details: error.code, // extra info for debugging
     });
   }
 };
@@ -888,6 +841,7 @@ const getTrailerMovieOrSeriesById = async (req, res) => {
 
 module.exports = {
   uploadMovie,
+  getPresignedUrl,
   getAllByFilter,
   createMovieOrWebSeries,
   updateMovieOrWebSeries,
