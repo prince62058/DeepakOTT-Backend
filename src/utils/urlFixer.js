@@ -2,8 +2,7 @@ const fixUrl = (url) => {
   if (!url || typeof url !== "string") return url;
 
   // Default to these values if env vars are not set, but prefer env vars
-  const oldDomain =
-    process.env.OLD_BUCKET_DOMAIN || "in-maa-1.linodeobjects.com/leadkart";
+  const oldDomain = process.env.OLD_BUCKET_DOMAIN;
   const newDomain =
     process.env.NEW_BUCKET_DOMAIN ||
     "satyakabir-bucket.sgp1.digitaloceanspaces.com";
@@ -11,7 +10,7 @@ const fixUrl = (url) => {
   let fixedUrl = url;
 
   // Replace old Linode domain with new DigitalOcean domain
-  if (url.includes(oldDomain)) {
+  if (oldDomain && url.includes(oldDomain)) {
     fixedUrl = url.replace(oldDomain, newDomain);
   }
 
