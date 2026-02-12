@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
     },
+    subAdminPassword: {
+      type: String,
+    },
     number: {
       type: Number,
     },

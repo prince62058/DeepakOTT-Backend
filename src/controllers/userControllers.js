@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const CryptoJS = require("crypto-js");
 const userModel = require("../models/userModels");
 const PurchaseSubscription = require("../models/purchaseSubscriptionModel");
 const { fixData } = require("../utils/urlFixer");
@@ -522,13 +523,17 @@ async function updateProfile(req, res) {
       });
     }
     let obj = {};
-    obj.email = email;
-    obj.image = image;
-    obj.name = name;
-    obj.permissions = permissions;
-    if (fcmToken) obj.fcmToken = fcmToken; // Update FCM Token
+    if (email !== undefined) obj.email = email;
+    if (image !== undefined) obj.image = image;
+    if (name !== undefined) obj.name = name;
+    if (permissions !== undefined) obj.permissions = permissions;
+    if (fcmToken) obj.fcmToken = fcmToken;
     if (password) {
       obj.password = await bcrypt.hash(password, 10);
+      obj.subAdminPassword = CryptoJS.AES.encrypt(
+        password,
+        "mySecretKey123",
+      ).toString();
     }
     const data = await userModel.findByIdAndUpdate(userId, obj, { new: true });
 
@@ -766,11 +771,16 @@ async function createSubAdmin(req, res) {
       .filter((permission) => permission.length > 0);
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const encryptedPassword = CryptoJS.AES.encrypt(
+      password,
+      "mySecretKey123",
+    ).toString();
 
     const subAdmin = await userModel.create({
       name,
       email: email.toLowerCase(),
       password: hashedPassword,
+      subAdminPassword: encryptedPassword,
       userType: "SubAdmin",
       permissions: Array.from(new Set(sanitizedPermissions)),
     });
