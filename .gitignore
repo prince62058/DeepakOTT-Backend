@@ -6,8 +6,7 @@
 .env.production
 
 # Credentials
-src/db/serviceAccount.json
-src/db/serviceAccountKey.json
+
 
 # Dependencies
 node_modules/
